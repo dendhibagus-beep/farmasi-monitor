@@ -24,16 +24,16 @@
 #include <DHT.h>
 
 // ── KONFIGURASI WIFI ──────────────────────────────────────────────
-const char* WIFI_SSID     = "NAMA_WIFI_ANDA";
-const char* WIFI_PASSWORD = "PASSWORD_WIFI_ANDA";
+const char* WIFI_SSID     = "hospot dendhi";
+const char* WIFI_PASSWORD = "jumanjii";
 
 // ── KONFIGURASI SUPABASE ──────────────────────────────────────────
 // Gunakan "anon public" key (bukan service_role) untuk perangkat lapangan.
-const char* SUPABASE_URL = "https://xxxxxxxxxxxx.supabase.co";
-const char* SUPABASE_KEY = "PASTE_ANON_KEY_ANDA_DISINI";
+const char* SUPABASE_URL = "https://ahxhppdptlxxfcdwyfbf.supabase.co";
+const char* SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFoeGhwcGRwdGx4eGZjZHd5ZmJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg3ODIxMTUsImV4cCI6MjEwNDM1ODExNX0.3YrYUPdc_KNts_y9_gnKS2kiK0WyAq-EGgymcxUt7yY";
 
 // ── KONFIGURASI RUANGAN & SENSOR ─────────────────────────────────
-const char* LOKASI = "Kulkas Vaksin 1";   // HARUS UNIK per alat, cocokkan dengan QR Code
+const char* LOKASI = "Gudang 1";   // HARUS UNIK per alat, cocokkan dengan QR Code
 #define DHTPIN   4                          // Pin data DHT22 (GPIO4 di ESP32)
 #define DHTTYPE  DHT22
 
