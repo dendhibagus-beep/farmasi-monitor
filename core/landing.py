@@ -55,7 +55,7 @@ def halaman_publik(lokasi_target: str):
     icon = STATUS_ICON[level]
 
     now_ref = datetime.now(waktu.tzinfo) if waktu.tzinfo else datetime.now()
-    offline = (now_ref - waktu) > timedelta(minutes=15)
+    offline = (now_ref - waktu) > timedelta(minutes=40)  # sensor kirim tiap 15 menit + buffer keterlambatan jaringan
 
     st.markdown(
         f"""

@@ -44,7 +44,7 @@ for i, lokasi in enumerate(lokasi_list):
         ada_alarm = True
     icon = STATUS_ICON[level]
     now_ref = datetime.now(terkini["waktu"].tzinfo) if terkini["waktu"].tzinfo else datetime.now()
-    offline = (now_ref - terkini["waktu"]) > timedelta(minutes=15)
+    offline = (now_ref - terkini["waktu"]) > timedelta(minutes=40)  # sensor kirim tiap 15 menit + buffer
 
     with kolom[i % len(kolom)]:
         st.markdown(

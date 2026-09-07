@@ -48,8 +48,8 @@ try:
     if df_log.empty:
         st.caption("Belum ada riwayat notifikasi (tabel `alarm_log` masih kosong).")
     else:
-        df_log["updated_at"] = pd.to_datetime(df_log["updated_at"]).dt.strftime("%d-%m-%Y %H:%M:%S")
-        df_log["last_notified_at"] = pd.to_datetime(df_log["last_notified_at"]).dt.strftime("%d-%m-%Y %H:%M:%S")
+        df_log["updated_at"] = df_log["updated_at"].dt.strftime("%d-%m-%Y %H:%M:%S")
+        df_log["last_notified_at"] = df_log["last_notified_at"].dt.strftime("%d-%m-%Y %H:%M:%S")
         st.dataframe(
             df_log[["lokasi", "last_status", "last_notified_at", "updated_at"]].rename(
                 columns={

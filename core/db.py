@@ -16,13 +16,18 @@ def init_connection() -> Client:
     return create_client(url, key)
 
 
+TZ_JAKARTA = "Asia/Jakarta"
+
+
 @st.cache_data(ttl=15)
 def get_log_suhu() -> pd.DataFrame:
     supabase = init_connection()
     resp = supabase.table("log_suhu").select("*").order("waktu", desc=False).execute()
     df = pd.DataFrame(resp.data)
     if not df.empty:
-        df["waktu"] = pd.to_datetime(df["waktu"])
+        # Database menyimpan waktu dalam UTC (timestamptz) — konversi ke WIB
+        # supaya semua jam yang tampil di dashboard sesuai waktu Jakarta.
+        df["waktu"] = pd.to_datetime(df["waktu"], utc=True).dt.tz_convert(TZ_JAKARTA)
         df["suhu"] = df["suhu"].astype(float)
         df["kelembapan"] = df["kelembapan"].astype(float)
     return df
@@ -116,4 +121,7 @@ def get_verifikasi_harian(limit: int = 200) -> pd.DataFrame:
         .limit(limit)
         .execute()
     )
-    return pd.DataFrame(resp.data)
+    df = pd.DataFrame(resp.data)
+    if not df.empty and "dibuat_pada" in df.columns:
+        df["dibuat_pada"] = pd.to_datetime(df["dibuat_pada"], utc=True).dt.tz_convert(TZ_JAKARTA)
+    return df
