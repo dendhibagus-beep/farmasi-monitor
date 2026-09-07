@@ -61,7 +61,9 @@ create policy "Izinkan baca publik (dashboard)"
 -- Insert/update ke alarm_log hanya dilakukan Edge Function memakai service_role key
 -- (otomatis melewati RLS) — tidak perlu policy insert/update publik.
 
--- 4. Verifikasi harian & tanda tangan supervisor (untuk akreditasi)
+-- 4. (Lama, boleh diabaikan) Verifikasi harian versi awal — digantikan oleh
+--    paraf_harian + verifikasi_bulanan di bawah. Dibiarkan di sini agar tidak
+--    error kalau sudah pernah dibuat sebelumnya; aman untuk di-drop kalau mau.
 create table if not exists verifikasi_harian (
   id bigint generated always as identity primary key,
   tanggal date not null,
@@ -81,4 +83,51 @@ create policy "Izinkan baca publik (riwayat verifikasi)"
 
 create policy "Izinkan insert publik (modul Verifikasi)"
   on verifikasi_harian for insert
+  with check (true);
+
+-- 5. Paraf harian — jejak supervisi setiap hari oleh Petugas Logistik (jam kerja)
+--    atau Duty Farmasi (luar jam kerja). Boleh lebih dari satu entri per hari
+--    per ruangan (misal shift pagi & shift malam masing-masing memaraf).
+create table if not exists paraf_harian (
+  id bigint generated always as identity primary key,
+  tanggal date not null,
+  lokasi text not null,
+  nama_petugas text not null,
+  peran text not null,
+  catatan text,
+  tanda_tangan_base64 text,
+  dibuat_pada timestamptz not null default now()
+);
+
+alter table paraf_harian enable row level security;
+
+create policy "Izinkan baca publik (riwayat paraf harian)"
+  on paraf_harian for select
+  using (true);
+
+create policy "Izinkan insert publik (modul Paraf Harian)"
+  on paraf_harian for insert
+  with check (true);
+
+-- 6. Verifikasi bulanan — tanda tangan Penanggung Jawab, sekali per bulan,
+--    meninjau rekap kepatuhan paraf_harian sepanjang bulan tsb.
+create table if not exists verifikasi_bulanan (
+  id bigint generated always as identity primary key,
+  bulan text not null,               -- label tampilan, mis. 'September 2026'
+  lokasi text not null,              -- daftar ruangan yang ditinjau (dipisah koma)
+  nama_penanggung_jawab text not null,
+  jabatan text not null,
+  catatan text,
+  tanda_tangan_base64 text,
+  dibuat_pada timestamptz not null default now()
+);
+
+alter table verifikasi_bulanan enable row level security;
+
+create policy "Izinkan baca publik (riwayat verifikasi bulanan)"
+  on verifikasi_bulanan for select
+  using (true);
+
+create policy "Izinkan insert publik (modul Verifikasi Bulanan)"
+  on verifikasi_bulanan for insert
   with check (true);

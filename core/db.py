@@ -6,6 +6,7 @@ fungsi yang sudah ada, tidak perlu tulis ulang koneksi database.
 
 import streamlit as st
 import pandas as pd
+from datetime import date
 from supabase import create_client, Client
 
 
@@ -95,33 +96,94 @@ def evaluasi_status(suhu: float, lembab: float, standar: dict):
     return "AMAN TERKENDALI", "ok", "Kondisi suhu & kelembapan terpantau stabil."
 
 
-# ── Modul Verifikasi & Tanda Tangan Supervisor ──────────────────────
+# ── Modul Paraf Harian (Petugas Logistik saat jam kerja / Duty Farmasi di luar jam kerja) ──
 
-def simpan_verifikasi(tanggal, lokasi: str, nama: str, jabatan: str, catatan: str, tanda_tangan_b64: str | None):
+def simpan_paraf_harian(tanggal, lokasi: str, nama: str, peran: str, catatan: str, tanda_tangan_b64: str | None):
     supabase = init_connection()
-    supabase.table("verifikasi_harian").insert(
+    supabase.table("paraf_harian").insert(
         {
             "tanggal": str(tanggal),
             "lokasi": lokasi,
-            "nama_supervisor": nama,
+            "nama_petugas": nama,
+            "peran": peran,
+            "catatan": catatan,
+            "tanda_tangan_base64": tanda_tangan_b64,
+        }
+    ).execute()
+    get_paraf_harian.clear()
+
+
+@st.cache_data(ttl=10)
+def get_paraf_harian(bulan_awal=None, bulan_akhir=None) -> pd.DataFrame:
+    supabase = init_connection()
+    q = supabase.table("paraf_harian").select("*").order("tanggal", desc=True).order("dibuat_pada", desc=True)
+    if bulan_awal:
+        q = q.gte("tanggal", str(bulan_awal))
+    if bulan_akhir:
+        q = q.lte("tanggal", str(bulan_akhir))
+    resp = q.execute()
+    df = pd.DataFrame(resp.data)
+    if not df.empty:
+        df["tanggal"] = pd.to_datetime(df["tanggal"]).dt.date
+        df["dibuat_pada"] = pd.to_datetime(df["dibuat_pada"], utc=True).dt.tz_convert(TZ_JAKARTA)
+    return df
+
+
+def hitung_kepatuhan_paraf(df_paraf: pd.DataFrame, lokasi: str, tahun: int, bulan: int) -> dict:
+    """Menghitung kelengkapan paraf harian untuk sebuah ruangan dalam satu bulan:
+    berapa hari sudah diparaf, dan tanggal mana saja yang masih bolong."""
+    import calendar
+
+    jumlah_hari = calendar.monthrange(tahun, bulan)[1]
+    semua_tanggal = {date(tahun, bulan, d) for d in range(1, jumlah_hari + 1)}
+
+    if df_paraf.empty:
+        tanggal_terisi = set()
+    else:
+        df_l = df_paraf[df_paraf["lokasi"] == lokasi]
+        tanggal_terisi = set(df_l["tanggal"])
+
+    tanggal_terisi = tanggal_terisi & semua_tanggal
+    hari_ini = date.today()
+    tanggal_kosong = sorted(t for t in (semua_tanggal - tanggal_terisi) if t <= hari_ini)
+    hari_berjalan = min(hari_ini.day, jumlah_hari) if (hari_ini.year, hari_ini.month) == (tahun, bulan) else jumlah_hari
+
+    return {
+        "jumlah_hari_bulan": jumlah_hari,
+        "hari_berjalan": hari_berjalan,
+        "hari_terisi": len(tanggal_terisi),
+        "tanggal_kosong": tanggal_kosong,
+    }
+
+
+# ── Modul Verifikasi Bulanan (Penanggung Jawab — tanda tangan sekali sebulan) ──
+
+def simpan_verifikasi_bulanan(bulan_label: str, lokasi: str, nama: str, jabatan: str, catatan: str, tanda_tangan_b64: str | None):
+    supabase = init_connection()
+    supabase.table("verifikasi_bulanan").insert(
+        {
+            "bulan": bulan_label,
+            "lokasi": lokasi,
+            "nama_penanggung_jawab": nama,
             "jabatan": jabatan,
             "catatan": catatan,
             "tanda_tangan_base64": tanda_tangan_b64,
         }
     ).execute()
+    get_verifikasi_bulanan.clear()
 
 
 @st.cache_data(ttl=10)
-def get_verifikasi_harian(limit: int = 200) -> pd.DataFrame:
+def get_verifikasi_bulanan(limit: int = 100) -> pd.DataFrame:
     supabase = init_connection()
     resp = (
-        supabase.table("verifikasi_harian")
+        supabase.table("verifikasi_bulanan")
         .select("*")
         .order("dibuat_pada", desc=True)
         .limit(limit)
         .execute()
     )
     df = pd.DataFrame(resp.data)
-    if not df.empty and "dibuat_pada" in df.columns:
+    if not df.empty:
         df["dibuat_pada"] = pd.to_datetime(df["dibuat_pada"], utc=True).dt.tz_convert(TZ_JAKARTA)
     return df
