@@ -1,8 +1,13 @@
 import streamlit as st
 
 from core.db import get_log_suhu, get_ambang_batas, get_standar, set_ambang_batas, hapus_ambang_batas
+from core.auth import require_admin_login
 
 st.title("⚙️ Pengaturan Ambang Batas Suhu & Kelembapan")
+
+if not require_admin_login("mengubah ambang batas suhu"):
+    st.stop()
+
 st.caption(
     "Secara default, ruangan yang namanya mengandung kata **\"kulkas\"** memakai standar 2–8°C, "
     "ruangan lain memakai 18–25°C. Atur di sini bila sebuah ruangan butuh ambang batas khusus."

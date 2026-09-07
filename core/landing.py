@@ -141,7 +141,8 @@ def halaman_publik(lokasi_target: str):
                     status_e = "🔴 masih berlangsung" if e["_berlangsung"] else "✅ selesai"
                     st.caption(
                         f"{e['mulai'].strftime('%H:%M')}–{e['selesai'].strftime('%H:%M')} "
-                        f"({e['durasi_menit']} menit, puncak {e['suhu_puncak']}°C) — {status_e}"
+                        f"[{e['jenis']}] (durasi {e['durasi_menit']} menit, "
+                        f"suhu puncak {e['suhu_puncak']}°C, kelembapan puncak {e['lembab_puncak']}%) — {status_e}"
                     )
             else:
                 st.caption("Tidak ada penyimpangan dalam 24 jam terakhir. ✅")

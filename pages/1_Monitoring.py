@@ -131,7 +131,9 @@ with tab2:
                     "Mulai": e["mulai"].strftime("%d-%m-%Y %H:%M"),
                     "Selesai": e["selesai"].strftime("%d-%m-%Y %H:%M"),
                     "Durasi (menit)": e["durasi_menit"],
+                    "Jenis": e["jenis"],
                     "Suhu Puncak": e["suhu_puncak"],
+                    "Kelembapan Puncak": e["lembab_puncak"],
                     "Status": "🔴 Masih berlangsung" if e["_berlangsung"] else "✅ Selesai",
                 }
                 for e in excursions

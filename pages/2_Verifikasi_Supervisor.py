@@ -16,6 +16,7 @@ from core.db import (
 )
 from core.report import buat_laporan_bulanan_html, buat_laporan_harian_html
 from core.signature import input_tanda_tangan
+from core.auth import require_admin_login
 
 NAMA_BULAN = [
     "Januari", "Februari", "Maret", "April", "Mei", "Juni",
@@ -76,12 +77,17 @@ with tab_harian:
         "Catatan (wajib diisi kalau ada penyimpangan)", key="catatan_paraf", height=80
     )
 
+    boleh_isi = True
+    if tanggal_paraf != date.today():
+        st.warning("📅 Anda memilih tanggal selain hari ini (backdating) — ini butuh login Admin/Penanggung Jawab.")
+        boleh_isi = require_admin_login("mengisi paraf untuk tanggal selain hari ini")
+
     pakai_ttd = st.checkbox("Sertakan gambar tanda tangan (opsional)", key="pakai_ttd_harian")
     tanda_tangan_paraf = None
     if pakai_ttd:
         tanda_tangan_paraf = input_tanda_tangan(key=f"canvas_paraf_{tanggal_paraf}_{lokasi_paraf}")
 
-    tombol_nonaktif = not nama_paraf
+    tombol_nonaktif = not nama_paraf or not boleh_isi
     if st.button("✅ Konfirmasi Sudah Diperiksa (Paraf)", type="primary", disabled=tombol_nonaktif, use_container_width=True):
         simpan_paraf_harian(tanggal_paraf, lokasi_paraf, nama_paraf, peran_paraf, catatan_paraf, tanda_tangan_paraf)
         st.success(f"Paraf tersimpan: {lokasi_paraf} · {tanggal_paraf} · oleh {nama_paraf} ({peran_paraf}).")
@@ -128,6 +134,9 @@ with tab_harian:
 # TAB 2 — VERIFIKASI BULANAN (PENANGGUNG JAWAB)
 # ══════════════════════════════════════════════════════════════════
 with tab_bulanan:
+    if not require_admin_login("mengakses Verifikasi Bulanan (Penanggung Jawab)"):
+        st.stop()
+
     st.subheader("Tinjauan & Tanda Tangan Bulanan")
     st.caption(
         "Dilakukan **satu kali per bulan** oleh Penanggung Jawab, setelah meninjau rekap kepatuhan "

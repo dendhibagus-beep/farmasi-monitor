@@ -11,6 +11,7 @@ import streamlit as st
 
 from core.theme import inject_css, sidebar_branding
 from core.landing import halaman_publik
+from core.auth import render_logout_button
 
 st.set_page_config(page_title="Command Center Farmasi", page_icon="💊", layout="wide")
 
@@ -47,5 +48,6 @@ navigasi = st.navigation(
 
 with st.sidebar:
     st.caption("Ketuk menu di atas untuk berpindah modul.")
+render_logout_button()
 
 navigasi.run()
