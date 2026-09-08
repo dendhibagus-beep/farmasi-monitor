@@ -28,7 +28,11 @@ def get_log_suhu() -> pd.DataFrame:
     if not df.empty:
         # Database menyimpan waktu dalam UTC (timestamptz) — konversi ke WIB
         # supaya semua jam yang tampil di dashboard sesuai waktu Jakarta.
-        df["waktu"] = pd.to_datetime(df["waktu"], utc=True).dt.tz_convert(TZ_JAKARTA)
+        # format="ISO8601" menangani variasi format ISO8601 (dengan/tanpa mikrodetik,
+        # akhiran "Z" atau offset "+00:00") dalam satu kolom yang sama — perlu karena
+        # tabel ini berisi campuran data dari firmware lama (tanpa jam eksplisit, diisi
+        # otomatis oleh Supabase) dan firmware baru (mengirim jam eksplisit dari NTP).
+        df["waktu"] = pd.to_datetime(df["waktu"], utc=True, format="ISO8601", errors="coerce").dt.tz_convert(TZ_JAKARTA)
         df["suhu"] = df["suhu"].astype(float)
         df["kelembapan"] = df["kelembapan"].astype(float)
     return df
@@ -124,8 +128,8 @@ def get_paraf_harian(bulan_awal=None, bulan_akhir=None) -> pd.DataFrame:
     resp = q.execute()
     df = pd.DataFrame(resp.data)
     if not df.empty:
-        df["tanggal"] = pd.to_datetime(df["tanggal"]).dt.date
-        df["dibuat_pada"] = pd.to_datetime(df["dibuat_pada"], utc=True).dt.tz_convert(TZ_JAKARTA)
+        df["tanggal"] = pd.to_datetime(df["tanggal"], errors="coerce").dt.date
+        df["dibuat_pada"] = pd.to_datetime(df["dibuat_pada"], utc=True, format="ISO8601", errors="coerce").dt.tz_convert(TZ_JAKARTA)
     return df
 
 
@@ -185,5 +189,5 @@ def get_verifikasi_bulanan(limit: int = 100) -> pd.DataFrame:
     )
     df = pd.DataFrame(resp.data)
     if not df.empty:
-        df["dibuat_pada"] = pd.to_datetime(df["dibuat_pada"], utc=True).dt.tz_convert(TZ_JAKARTA)
+        df["dibuat_pada"] = pd.to_datetime(df["dibuat_pada"], utc=True, format="ISO8601", errors="coerce").dt.tz_convert(TZ_JAKARTA)
     return df

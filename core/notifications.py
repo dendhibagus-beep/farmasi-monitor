@@ -54,7 +54,7 @@ def get_alarm_log() -> pd.DataFrame:
     resp = supabase.table("alarm_log").select("*").order("updated_at", desc=True).execute()
     df = pd.DataFrame(resp.data)
     if not df.empty:
-        df["updated_at"] = pd.to_datetime(df["updated_at"], utc=True).dt.tz_convert("Asia/Jakarta")
+        df["updated_at"] = pd.to_datetime(df["updated_at"], utc=True, format="ISO8601", errors="coerce").dt.tz_convert("Asia/Jakarta")
         if "last_notified_at" in df.columns:
-            df["last_notified_at"] = pd.to_datetime(df["last_notified_at"], utc=True, errors="coerce").dt.tz_convert("Asia/Jakarta")
+            df["last_notified_at"] = pd.to_datetime(df["last_notified_at"], utc=True, format="ISO8601", errors="coerce").dt.tz_convert("Asia/Jakarta")
     return df
